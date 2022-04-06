@@ -1,26 +1,14 @@
 import tensorflow as tf
 import numpy as np
 import matplotlib.pyplot as plt
-from sklearn.model_selection import train_test_split
-from scipy.stats import loguniform
-import math
 import os
 import glob
 import pandas as pd
-
-from tensorflow.keras.models import Sequential
-from tensorflow.keras.models import Sequential
-from tensorflow.keras.layers import Dense
-from tensorflow.keras.layers import Flatten
-from tensorflow.keras.layers import Conv1D
-from tensorflow.keras.layers import MaxPooling1D
 
 import pickle
 
 from ResNet50_1D import *
 from ConvNet_1D import *
-
-
 
 if __name__ == "__main__":
 
@@ -33,7 +21,7 @@ if __name__ == "__main__":
     MetricsF = 'mae'
     learningRate = 0.0001
     batchSize = 32
-    nEpochs = 6
+    nEpochs = 2000
     modelName = 'ConvNet-1D'
     modelVersion = 'v1'
     sample = 'Mica'
