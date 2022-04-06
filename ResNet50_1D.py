@@ -1,21 +1,9 @@
 import tensorflow as tf
-
 import tensorflow.keras.backend as K
-
 from tensorflow.keras.utils import plot_model, to_categorical
-#from tensorflow.keras.models import Sequential, load_model
-#from tensorflow.keras.layers import Activation, Dropout, Flatten, Dense, Conv1D, BatchNormalization
-
-#from tensorflow.keras.callbacks import ModelCheckpoint
-#from tensorflow.keras import metrics
-#from tensorflow.keras import *
-#from tensorflow.keras.optimizers import Adam 
-
 from tensorflow.keras.models import *
 from tensorflow.keras.layers import *
 from tensorflow.keras.callbacks import *
-#from tensorflow.keras.initializers import *
-#from tensorflow.keras.engine.topology import Layer
 
 def identity_block(x, kernel_size, filters, stage, block):
     """
@@ -42,21 +30,19 @@ def identity_block(x, kernel_size, filters, stage, block):
     # define shortcut
     x_shortcut = x
     
-    # First Conv layer
+    # Main path
     x = Conv1D(filters = filters1, kernel_size = 1, strides = 1, padding = 'valid', name = conv_name_base + '2a')(x)
     x = BatchNormalization(axis = 2, name = bn_name_base + '2a')(x)
     x = Activation('relu')(x)   
     
-    # Second Conv layer
     x = Conv1D(filters = filters2, kernel_size = kernel_size, strides = 1, padding = 'same', name = conv_name_base + '2b')(x)
     x = BatchNormalization(axis = 2, name = bn_name_base + '2b')(x)
     x = Activation('relu')(x)
 
-    # Third Conv layer
     x = Conv1D(filters = filters3, kernel_size = 1, strides = 1, padding = 'valid', name = conv_name_base + '2c')(x)
     x = BatchNormalization(axis = 2, name = bn_name_base + '2c')(x)
 
-    # Merge with Residual shortcut
+    # Add shortcut and main path
     x = Add()([x, x_shortcut])
     x = Activation('relu')(x)
     
@@ -87,8 +73,7 @@ def conv_block(x, kernel_size, filters, stage, block, strides = 2):
     # Input to the shortcut
     x_shortcut = x
 
-    ##### MAIN PATH #####
-
+    # Main path
     x= Conv1D(filters1, 1, strides = strides, name = conv_name_base + '2a')(x)
     x = BatchNormalization(axis = 2, name = bn_name_base + '2a')(x)
     x = Activation('relu')(x)
@@ -100,12 +85,11 @@ def conv_block(x, kernel_size, filters, stage, block, strides = 2):
     x = Conv1D(filters3, 1, name = conv_name_base + '2c')(x)
     x = BatchNormalization(axis = 2, name = bn_name_base + '2c')(x)
     
-    ##### SHORTCUT PATH ####
-    
+    # shortcut path
     x_shortcut = Conv1D(filters3, 1, strides = strides, name = conv_name_base + '1')(x_shortcut)
     x_shortcut = BatchNormalization(axis = 2, name = bn_name_base + '1')(x_shortcut)
 
-    # Add shortcut value to main path
+    # Add shortcut and main path
     x = Add()([x, x_shortcut])
     x = Activation('relu')(x)
     
@@ -162,12 +146,10 @@ def ResNet50_1D_g(input_shape = (5120, 1), kernel_size_stage1=3, kernel_size_blo
 
     x = AveragePooling1D(5, name='avg_pool')(x)
     
-    # output layer
+    # flatten the output of the conv layers
     x = Flatten()(x)
-    #X = Dropout(0.5)(X)
-    #X = Dense(16384, name='Dense', kernel_initializer = glorot_uniform(seed=0))(X)
     
-    # For regression
+    # Output fully connected layer
     x = Dense(n_out, name='fc-output')(x)
     
     model = Model(inputs = x_input, outputs = x, name='ResNet50_1D')
