@@ -1,14 +1,16 @@
-import tensorflow as tf
 import numpy as np
-import matplotlib.pyplot as plt
 from sklearn.model_selection import train_test_split
-from scipy.stats import loguniform
-import math
 import os
-import pandas as pd
+import glob
 import pickle
 
 def interpolate(z0, fz, n_points):
+    """
+    Scipt that Interpolates a 1D numpy array to a provided number of 
+    points. It also receives an index for a position within the 1D array,
+    and returns the index that would compare to the same relative 
+    position within the interpolated array.
+    """
     
     z = np.arange(fz.shape[0])
     z_interpolated = np.linspace(
@@ -30,6 +32,17 @@ def interpolate(z0, fz, n_points):
            fz_interpolated)
 
 def readFZs(DIR, n_points):
+    """
+    Script that:
+      - Reads force measurements, and their labelled events.
+      - Interpolates the force measurements (1D arrays) to 
+        n_points (input parameter). For this, it makes use of 
+        the function interpolate.
+      - Normalizes the force measurements.
+      - Returns numpy arrays for the interpolated force 
+        measurements and labelled positions, both the the 
+        normalized and non-normalized formats.
+    """
     
     X = []
     y = []
@@ -42,8 +55,8 @@ def readFZs(DIR, n_points):
     q_old = -1
     for file in sorted(os.listdir(DATADIR)):
         q = file.split('_')
-        if int(q[2]) != int(q_old):
-            q_old = q[2]
+        if int(q[1]) != int(q_old):
+            q_old = q[1]
             z_original, fz = np.loadtxt(os.path.join(DATADIR,file))
         else:
             z0 = int(np.loadtxt(os.path.join(DATADIR,file)))            
@@ -72,16 +85,22 @@ if __name__ == "__main__":
     """
 
 
-    parentFolder = 'FZs/'
-    fzsFolder = 'MicaFZs'
+    parentFolder = 'FZs'
+    fzsFolder = 'Mica'
     full_fzs_folder = f'{parentFolder}/{fzsFolder}'
 
     n_points = 5120
 
     testSize = 0.2
 
-    pickleFolder = f'{parentFolder}/Pickle_{fzs_folder}_nPoints_{n_points}'
-    os.mkdir(pickle_folder)    
+    pickleFolder = f'{parentFolder}/pickle_files_{fzsFolder}_nPoints_{n_points}'
+
+    if os.path.exists(pickleFolder):
+        files = glob.glob(f'{pickleFolder}/*')
+        for f in files:
+            os.remove(f)
+    else:
+        os.mkdir(pickleFolder) 
 
     X, z, y, Xi, zi, yi = readFZs(full_fzs_folder, n_points)
     
@@ -102,52 +121,51 @@ if __name__ == "__main__":
         shuffle=True)
 
     
-    pickle_out = open(os.path.join(pickle_folder, 'Xi_train'), 'wb')
+    pickle_out = open(os.path.join(pickleFolder, 'Xi_train'), 'wb')
     pickle.dump(Xi_train, pickle_out)
     pickle_out.close()
 
-    pickle_out = open(os.path.join(pickle_folder, 'zi_train'), 'wb')
+    pickle_out = open(os.path.join(pickleFolder, 'zi_train'), 'wb')
     pickle.dump(zi_train, pickle_out)
     pickle_out.close()
 
-    pickle_out = open(os.path.join(pickle_folder, 'yi_train'), 'wb')
+    pickle_out = open(os.path.join(pickleFolder, 'yi_train'), 'wb')
     pickle.dump(yi_train, pickle_out)
     pickle_out.close()
 
-    pickle_out = open(os.path.join(pickle_folder, 'Xi_val'), 'wb')
+    pickle_out = open(os.path.join(pickleFolder, 'Xi_val'), 'wb')
     pickle.dump(Xi_val, pickle_out)
     pickle_out.close()
 
-    pickle_out = open(os.path.join(pickle_folder, 'zi_val'), 'wb')
+    pickle_out = open(os.path.join(pickleFolder, 'zi_val'), 'wb')
     pickle.dump(zi_val, pickle_out)
     pickle_out.close()
 
-    pickle_out = open(os.path.join(pickle_folder, 'yi_val'), 'wb')
+    pickle_out = open(os.path.join(pickleFolder, 'yi_val'), 'wb')
     pickle.dump(yi_val, pickle_out)
     pickle_out.close()
 
-
-    pickle_out = open(os.path.join(pickle_folder, 'X_train'), 'wb')
+    pickle_out = open(os.path.join(pickleFolder, 'X_train'), 'wb')
     pickle.dump(X_train, pickle_out)
     pickle_out.close()
 
-    pickle_out = open(os.path.join(pickle_folder, 'z_train'), 'wb')
+    pickle_out = open(os.path.join(pickleFolder, 'z_train'), 'wb')
     pickle.dump(z_train, pickle_out)
     pickle_out.close()
 
-    pickle_out = open(os.path.join(pickle_folder, 'y_train'), 'wb')
+    pickle_out = open(os.path.join(pickleFolder, 'y_train'), 'wb')
     pickle.dump(y_train, pickle_out)
     pickle_out.close()
 
-    pickle_out = open(os.path.join(pickle_folder, 'X_val'), 'wb')
+    pickle_out = open(os.path.join(pickleFolder, 'X_val'), 'wb')
     pickle.dump(X_val, pickle_out)
     pickle_out.close()
 
-    pickle_out = open(os.path.join(pickle_folder, 'z_val'), 'wb')
+    pickle_out = open(os.path.join(pickleFolder, 'z_val'), 'wb')
     pickle.dump(z_val, pickle_out)
     pickle_out.close()
 
-    pickle_out = open(os.path.join(pickle_folder, 'y_val'), 'wb')
+    pickle_out = open(os.path.join(pickleFolder, 'y_val'), 'wb')
     pickle.dump(y_val, pickle_out)
     pickle_out.close()
 
