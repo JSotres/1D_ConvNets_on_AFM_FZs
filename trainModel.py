@@ -33,7 +33,7 @@ if __name__ == "__main__":
     MetricsF = 'mae'
     learningRate = 0.0001
     batchSize = 32
-    nEpochs = 3
+    nEpochs = 6
     modelName = 'ConvNet-1D'
     modelVersion = 'v1'
     sample = 'Mica'
