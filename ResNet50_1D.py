@@ -95,7 +95,7 @@ def conv_block(x, kernel_size, filters, stage, block, strides = 2):
     
     return x
 
-def ResNet50_1D_g(input_shape = (5120, 1), kernel_size_stage1=3, kernel_size_blocks=3, n_out=1):
+def get_ResNet50_1D(input_shape = (5120, 1), kernel_size_stage1=3, kernel_size_blocks=3, n_out=1):
     """
     Implementation of ResNet50 for 1D data and regression.
     Modified from https://github.com/fchollet/deep-learning-models/blob/master/resnet50.py
