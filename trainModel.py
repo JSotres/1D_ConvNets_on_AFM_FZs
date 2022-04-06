@@ -17,24 +17,39 @@ from tensorflow.keras.layers import MaxPooling1D
 
 import pickle
 
-from models import *
-from ResNet50 import *
 from ResNet50_1D import *
-from ResNet50_1D_b import *
-from ResNet50_1D_c import *
-from ResNet50_1D_d import *
-from ResNet50_1D_e import *
-from ResNet50_1D_f import *
-from ResNet50_1D_g import *
-from ConvNet1D import *
+from ConvNet_1D import *
 
 
 
 if __name__ == "__main__":
 
-    pickle_folder = 'FZs/PellicleNaCl10mM100mM3/Pickle_Renamed_Pellicle_NaCl10mM100mM3_nPoints_5120'
-    #pickle_folder = 'FZs/Mica/Pickle_RenamedFZsMica_nPoints_5120'
+    pickle_folder = 'FZs/pickle_files_Mica_nPoints_5120'
+    
 
+    n_points = 5120
+    optimazerAlg = 'Adam'
+    LossF = 'mse'
+    MetricsF = 'mae'
+    learningRate = 0.0001
+    batchSize = 32
+    nEpochs = 3
+    modelName = 'ConvNet-1D'
+    modelVersion = 'v1'
+    sample = 'Mica'
+
+    fileModelEvaluation = f'evaluation_ models_trained_on_{sample}.csv'
+
+    # If you want to train ConvNet-1D
+    model = get_ConvNet1D(n_points)
+
+    # If you want to train ResNet50-1D, just use:
+    #model = get_ResNet50_1D()
+    
+    optimizer = tf.keras.optimizers.Adam(learning_rate=learningRate)
+    model.compile(optimizer=optimizer, loss=LossF, metrics=[MetricsF])
+
+    
     Xi_train = pickle.load(open(os.path.join(pickle_folder,'Xi_train'), 'rb'))
     zi_train = pickle.load(open(os.path.join(pickle_folder,'zi_train'), 'rb'))
     yi_train = pickle.load(open(os.path.join(pickle_folder,'yi_train'), 'rb'))
@@ -47,34 +62,20 @@ if __name__ == "__main__":
     yi_val = pickle.load(open(os.path.join(pickle_folder,'yi_val'), 'rb'))
     X_val = pickle.load(open(os.path.join(pickle_folder,'X_val'), 'rb'))
     z_val = pickle.load(open(os.path.join(pickle_folder,'z_val'), 'rb'))
-    y_val = pickle.load(open(os.path.join(pickle_folder,'y_val'), 'rb'))
-
-    n_points = 5120
-    optimazerAlg = 'Adam'
-    LossF = 'mse'
-    MetricsF = 'mae'
-    learningRate = 0.0001
-    batchSize = 32
-    nEpochs = 2000
-
-    modelName = 'ConvNet1D'
-
-    modelVersion = 'v1'
-    sample = 'Mica'
-
-    model = get_ConvNet1D(n_points)
-
-    optimizer = tf.keras.optimizers.Adam(learning_rate=learningRate)
-
-    model.compile(optimizer=optimizer, loss=LossF, metrics=[MetricsF])
-
-    fileModelEvaluation = f'models_trained_on_{sample}_evaluation_.csv'
+    y_val = pickle.load(open(os.path.join(pickle_folder,'y_val'), 'rb'))    
 
     Xi_train = np.array(Xi_train).reshape(-1,n_points,1)
     yi_train = np.asarray(yi_train)
 
     Xi_val = np.array(Xi_val).reshape(-1,n_points,1)
     yi_val = np.asarray(yi_val)
+
+    if not os.path.exists('Models'):
+        os.mkdir('Models')
+
+    if not os.path.exists(f'Models/{sample}'):
+        os.mkdir(f'Models/{sample}')
+            
 
 
     if os.path.exists(f'Models/{sample}/{modelName}_{modelVersion}_trained_on_{sample}'):
@@ -93,12 +94,20 @@ if __name__ == "__main__":
         mode='min',
         save_best_only=True)
 
-    history = model.fit(Xi_train, yi_train, epochs=nEpochs, batch_size=batchSize, validation_data=(Xi_val, yi_val), verbose=2, callbacks=[model_checkpoint_callback], shuffle=True)
+    history = model.fit(
+        Xi_train,
+        yi_train,
+        epochs=nEpochs,
+        batch_size=batchSize,
+        validation_data=(Xi_val, yi_val),
+        verbose=2,
+        callbacks=[model_checkpoint_callback],
+        shuffle=True
+    )
 
-   
-            
-
-    model.save_weights(os.path.join(f'Models/{sample}/{modelName}_{modelVersion}_trained_on_{sample}', f'weights_{modelName}_{modelVersion}_trained_on_{sample}.h5'))
+    model.save_weights(os.path.join(
+        f'Models/{sample}/{modelName}_{modelVersion}_trained_on_{sample}', f'weights_{modelName}_{modelVersion}_trained_on_{sample}.h5'
+    ))
 
     model_data = {
         'model_name': modelName,
@@ -123,7 +132,25 @@ if __name__ == "__main__":
     if os.path.isfile(os.path.join(f'Models/{sample}', fileModelEvaluation)):
         df = pd.read_csv(os.path.join(f'Models/{sample}', fileModelEvaluation), index_col=False)
     else:
-        df=pd.DataFrame(columns=['model_name', 'model_version', 'sample', 'n_points', 'optimazer', 'loss', 'metrics', 'learning_rate', 'batch_size', 'epochs', 'final_train_loss', 'final_val_loss', 'final_train_metrics', 'final_val_metrics', 'train_loss','val_loss', 'val_metrics'])
+        df=pd.DataFrame(columns=[
+            'model_name',
+            'model_version',
+            'sample',
+            'n_points',
+            'optimazer',
+            'loss',
+            'metrics',
+            'learning_rate',
+            'batch_size',
+            'epochs',
+            'final_train_loss',
+            'final_val_loss',
+            'final_train_metrics',
+            'final_val_metrics',
+            'train_loss',
+            'val_loss',
+            'val_metrics'
+        ])
 
     df = df.append(model_data, ignore_index=True)
 
@@ -131,7 +158,7 @@ if __name__ == "__main__":
 
     plt.plot(history.history['loss'])
     plt.plot(history.history['val_loss'])
-    plt.title(f'model loss ({LossF})')
+    plt.title(f'model loss ({LossF}) - {modelName}_{modelVersion}_trained_on_{sample}')
     plt.ylabel(f'loss ({LossF})')
     plt.xlabel('epoch')
     plt.legend(['train', 'val'], loc='upper right')
@@ -140,7 +167,7 @@ if __name__ == "__main__":
 
     plt.plot(history.history[MetricsF])
     plt.plot(history.history[f'val_{MetricsF}'])
-    plt.title(f'{MetricsF} interpolated curves')
+    plt.title(f'{MetricsF} - {modelName}_{modelVersion}_trained_on_{sample}')
     plt.ylabel(MetricsF)
     plt.xlabel('epoch')
     plt.legend(['train', 'val'], loc='upper right')
@@ -154,40 +181,24 @@ if __name__ == "__main__":
             f'Architecture_{modelName}_{modelVersion}_trained_on_{sample}.png'),
         show_shapes=True)
 
-    mae_list = []
-    fz_z_interval = []
-    fz_z_range = []
+    error_list = []
 
     y_hat = model.predict(Xi_val)
     y_hat = np.squeeze(y_hat)
 
+    for q in range(yi_val.shape[0]):
+        error_list.append(z_val[q][y_val[q]] - z_val[q][int(y_hat[q]*(len(z_val[q])-1))])
+        
+
     nbins=40
 
-
-    for q in range(yi_val.shape[0]):
-
-        mae_list.append(
-            np.abs(
-                z_val[q][y_val[q]] - z_val[q][int(y_hat[q]*(len(z_val[q])-1))]
-            )
-        )
-        fz_z_interval.append(
-            np.abs (
-                z_val[q][0]-z_val[q][1]
-            )
-        )
-        fz_z_range.append(
-            np.abs(
-                z_val[q][0]-z_val[q][-1]
-            )
-        )
-
-    plt.hist(mae_list, bins=nbins)
+    plt.hist(error_list, bins=nbins)
     plt.ylabel('counts')
-    plt.xlabel('mae (nm)')
+    plt.xlabel('zc-zc_pred (nm)')
+    plt.title(f'zc-zc_pred - {modelName}_{modelVersion}_trained_on_{sample}')
     plt.savefig(os.path.join(
         f'Models/{sample}/{modelName}_{modelVersion}_trained_on_{sample}',
-        f'MAE_Raw_{modelName}_{modelVersion}_trained_on_{sample}.png'))
+        f'Error_{modelName}_{modelVersion}_trained_on_{sample}.png'))
     plt.show()
 
     
